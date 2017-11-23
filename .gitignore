@@ -1,0 +1,9 @@
+# files
+*.pyc
+*.sw*
+*.pkl
+*.npy
+
+#foloders
+data/*
+logs/*
