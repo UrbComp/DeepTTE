@@ -61,7 +61,7 @@ class Net(nn.Module):
     def attent_pooling(self, hiddens, lens, attr_t):
         attent = F.tanh(self.attr2atten(attr_t)).permute(0, 2, 1)
 
-
+	#hidden b*s*f atten b*f*1 alpha b*s*1 (s is length of sequence)
         alpha = torch.bmm(hiddens, attent)
         alpha = torch.exp(-alpha)
 
