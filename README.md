@@ -1,7 +1,6 @@
 This project is the code of AAAI 2018 paper ***When Will You Arrive? Estimating Travel Time Based on Deep Neural Networks***.
-We provide the complete version of code and part of sample data in Beijing. You can replace the sample data with your own data easily. See the samples in data/ for more details.
-We further provide a pre-trained model in saved_weights/ folder.
-
+We provide the complete version of code and part of sample data in Chengdu. You can replace the sample data with your own data easily. See the samples in data/ for more details.
+The complete data can be downloaded at http://www.dcjingsai.com/common/cmpt/%E4%BA%A4%E9%80%9A%E7%BA%BF%E8%B7%AF%E9%80%9A%E8%BE%BE%E6%97%B6%E9%97%B4%E9%A2%84%E6%B5%8B_%E8%B5%9B%E4%BD%93%E4%B8%8E%E6%95%B0%E6%8D%AE.html.
 # Usage:
 
 ## Model Training
