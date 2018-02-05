@@ -2,12 +2,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import utils
 import numpy as np
 
 from torch.autograd import Variable
 
 class Net(nn.Module):
-    embed_dims = [('driverID', 24000, 16), ('weekID', 7, 3), ('timeID', 1440, 8), ('weather', 20, 3)]
+    embed_dims = [('driverID', 24000, 16), ('weekID', 7, 3), ('timeID', 1440, 8)]
 
     def __init__(self):
         super(Net, self).__init__()
@@ -34,8 +35,8 @@ class Net(nn.Module):
             attr_t = torch.squeeze(embed(attr_t))
 
             em_list.append(attr_t)
-        em_list.append(attr['_dist'].view(-1, 1))
+
+        dist = utils.normalize(attr['dist'], 'dist')
+        em_list.append(dist.view(-1, 1))
 
         return torch.cat(em_list, dim = 1)
-
-

@@ -7,19 +7,20 @@ We provide the complete version of code and part of sample data in Chengdu. You 
 python train.py
 ### Parameters:
 
-* model: The model to train (e.g., AttrTTE, DeepTTE, see ***models*** folder)
 * task: train/test
 * batch_size: the batch_size to train, default 400
 * epochs: the epoch to train, default 100
 * kernel_size: the kernel size of Geo-Conv, only used when the model contains the Geo-conv part
 * pooling_method: attention/mean
 * alpha: the weight of combination in multi-task learning
-* driver_off: if the driver_off = 1, then all the driver ID is reset to 0, this option is used to show the effectiveness of the driverID embedding.
-* week_off: similar with driver_off, used for the weekID embedding
-* road_off: whether to use the road information
 * log_file: the path of log file
+* result_file: the path to save the predict result. By default, this switch is off during the training
 
-The training log will be recorded to log_file
+Example:
+```
+python main.py --task train  --batch_size 10  --result_file ./result/deeptte.res --pooling_method attention --kernel_size 3 --alpha 0.1 --log_file run_log
+```
+
 
 ## Model Evaluation
 
@@ -29,9 +30,26 @@ The training log will be recorded to log_file
 
 ## Example:
 ```
-Train:
-python main.py --model DeepTTE --batch_size 400 --epochs 100 --log_file deeptte_log --pooling_method attention --kernel_size 3 --alpha 0.3
-
-Test:
-python main.py --task test --model DeepTTE --batch_size 10 --weight_file ./saved_weights/model_weight --result_file ./result/deeptte.res --pooling_method attention --kernel_size 3
+python main.py --task test --weight_file ./saved_weights/weight --batch_size 10  --result_file ./result/deeptte.res --pooling_method attention --kernel_size 3 --alpha 0.1
 ```
+
+## How to User Your Own Data
+In the data folder we provide some sample data. You can use your own data with the corresponding format as in the data samples.
+
+### Format Instructions
+Each sample is a json string. The key contains:
+* driverID
+* dateID: the date in a month, from 0 to 30
+* weekID: the day of week, from 0 to 6 (Mon to Sun)
+* timeID: the ID of the start time (in minute), from 0 to 1439
+* dist: total distance of the path (KM)
+* time: total travel time (min), i.e., the ground truth. You can set it as any value during the test phase
+* lngs: the sequence of longitutes of all sampled GPS points
+* lats: the sequence of latitudes of all sampled GPS points
+* states: the sequence of taxi states (available/unavaible). You can remove this attributes if it is not available in your dataset. See models/base/Attr.py for details.
+* time_gap: the same length as lngs. Each value indicates the time gap from current point to the firt point (set it as arbitrary values during the test)
+* dist_gap: the same as time_gap
+
+The GPS points in a path should be resampled with nearly equal distance.
+
+Furthermore, repalce the config file according to your own data, including the dist_mean, time_mean, lngs_mean, etc.

@@ -18,16 +18,13 @@ from torch.autograd import Variable
 
 import numpy as np
 
-from ipdb import set_trace
-
 parser = argparse.ArgumentParser()
 # basic args
-parser.add_argument('--model', type = str)
-
-parser.add_argument('--task', type = str, default = 'train')
-parser.add_argument('--batch_size', type = int, default = 400)
+parser.add_argument('--task', type = str)
+parser.add_argument('--batch_size', type = int, default = 64)
 parser.add_argument('--epochs', type = int, default = 100)
 
+# evaluation args
 parser.add_argument('--weight_file', type = str)
 parser.add_argument('--result_file', type = str)
 
@@ -36,17 +33,9 @@ parser.add_argument('--kernel_size', type = int)
 
 # rnn args
 parser.add_argument('--pooling_method', type = str)
-# sample each trajectory to 128-length trajectory if resample == 1
-parser.add_argument('--resample', type = int)
 
 # multi-task args
 parser.add_argument('--alpha', type = float)
-
-# control exp args
-parser.add_argument('--driver_off', type = int, default = 0)
-parser.add_argument('--week_off', type = int, default = 0)
-parser.add_argument('--weather_off', type = int, default = 0)
-parser.add_argument('--road_off', type = int, default = 0)
 
 # log file name
 parser.add_argument('--log_file', type = str)
@@ -55,7 +44,7 @@ args = parser.parse_args()
 
 config = json.load(open('./config.json', 'r'))
 
-def train(model, elogger, files):
+def train(model, elogger, train_set, eval_set):
     # record the experiment setting
     elogger.log(str(model))
     elogger.log(str(args._get_kwargs()))
@@ -69,14 +58,11 @@ def train(model, elogger, files):
 
     for epoch in xrange(args.epochs):
         print 'Training on epoch {}'.format(epoch)
-        for input_file in files:
-            start_time = time.time()
+        for input_file in train_set:
             print 'Train on file {}'.format(input_file)
 
             # data loader, return two dictionaries, attr and traj
-            data_iter = data_loader.get_loader(input_file, args.batch_size,\
-                                               resample = args.resample
-                        )
+            data_iter = data_loader.get_loader(input_file, args.batch_size)
 
             running_loss = 0.0
 
@@ -93,18 +79,18 @@ def train(model, elogger, files):
 
                 running_loss += loss.data[0]
                 print '\r Progress {:.2f}%, average loss {}'.format((idx + 1) * 100.0 / len(data_iter), running_loss / (idx + 1.0)),
-            print 'training time: ', time.time() - start_time
+            print
             elogger.log('Training Epoch {}, File {}, Loss {}'.format(epoch, input_file, running_loss / (idx + 1.0)))
 
         # evaluate the model after each epoch
-        evaluate(model, elogger, config['validate_set'])
+        evaluate(model, elogger, eval_set, save_result = False)
 
         # save the weight file after each epoch
         weight_name = '{}_{}'.format(args.log_file, str(datetime.datetime.now()))
         elogger.log('Save weight file {}'.format(weight_name))
         torch.save(model.state_dict(), './saved_weights/' + weight_name)
 
-def write_result(fs, pred_dict, attr, ofs):
+def write_result(fs, pred_dict, attr):
     pred = pred_dict['pred'].data.cpu().numpy()
     label = pred_dict['label'].data.cpu().numpy()
 
@@ -115,33 +101,27 @@ def write_result(fs, pred_dict, attr, ofs):
         timeID = attr['timeID'].data[i]
         driverID = attr['driverID'].data[i]
 
-        if np.abs(label[i][0] - pred[i][0]) / label[i][0] < 0.1:
-            ofs.write('%d %d %d\n' % (dateID, timeID, driverID))
 
-        
 def evaluate(model, elogger, files, save_result = False):
     model.eval()
-    if save_result: fs = open('%s' % args.result_file, 'w')
+    if save_result:
+        fs = open('%s' % args.result_file, 'w')
 
     for input_file in files:
-        ofs = open(input_file, 'w')
         running_loss = 0.0
-        data_iter = data_loader.get_loader(input_file, args.batch_size, resample = args.resample)
+        data_iter = data_loader.get_loader(input_file, args.batch_size)
 
         for idx, (attr, traj) in enumerate(data_iter):
             attr, traj = utils.to_var(attr), utils.to_var(traj)
 
             pred_dict, loss = model.eval_on_batch(attr, traj, config)
 
-            if save_result: write_result(fs, pred_dict, attr, ofs)
+            if save_result: write_result(fs, pred_dict, attr)
 
             running_loss += loss.data[0]
 
         print 'Evaluate on file {}, loss {}'.format(input_file, running_loss / (idx + 1.0))
         elogger.log('Evaluate File {}, Loss {}'.format(input_file, running_loss / (idx + 1.0)))
-
-
-        ofs.close()
 
     if save_result: fs.close()
 
@@ -158,19 +138,18 @@ def get_kwargs(model_class):
     return kwargs
 
 def run():
-    # get the model class from args.model
-    model_class = getattr(models, args.model).Net
     # get the model arguments
-    kwargs = get_kwargs(model_class)
+    kwargs = get_kwargs(models.DeepTTE.Net)
 
     # model instance
-    model = model_class(**kwargs)
+    model = models.DeepTTE.Net(**kwargs)
 
     # experiment logger
     elogger = logger.Logger(args.log_file)
 
     if args.task == 'train':
-        train(model, elogger, config['train_set'])
+        train(model, elogger, train_set = config['train_set'], eval_set = config['eval_set'])
+
     elif args.task == 'test':
         # load the saved weight file
         model.load_state_dict(torch.load(args.weight_file))

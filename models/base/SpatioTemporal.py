@@ -87,7 +87,7 @@ class Net(nn.Module):
         lens = map(lambda x: x - self.kernel_size + 1, traj['lens'])
 
         packed_inputs = nn.utils.rnn.pack_padded_sequence(conv_locs, lens, batch_first = True)
-        
+
         packed_hiddens, (h_n, c_n) = self.rnn(packed_inputs)
         hiddens, lens = nn.utils.rnn.pad_packed_sequence(packed_hiddens, batch_first = True)
 
@@ -96,4 +96,3 @@ class Net(nn.Module):
 
         elif self.pooling_method == 'attention':
             return packed_hiddens, lens, self.attent_pooling(hiddens, lens, attr_t)
-

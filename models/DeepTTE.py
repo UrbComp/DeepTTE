@@ -8,8 +8,6 @@ import numpy as np
 
 from torch.autograd import Variable
 
-from ipdb import set_trace
-
 EPS = 10
 
 class EntireEstimator(nn.Module):
@@ -137,7 +135,7 @@ class Net(nn.Module):
         else:
             entire_out = self(attr, traj, config)
 
-        pred_dict, entire_loss = self.entire_estimate.eval_on_batch(entire_out, attr['_time'], config['time_mean'], config['time_std'])
+        pred_dict, entire_loss = self.entire_estimate.eval_on_batch(entire_out, attr['time'], config['time_mean'], config['time_std'])
 
         if self.training:
             # get the mean/std of each local path
@@ -150,4 +148,3 @@ class Net(nn.Module):
             return pred_dict, (1 - self.alpha) * entire_loss + self.alpha * local_loss
         else:
             return pred_dict, entire_loss
-

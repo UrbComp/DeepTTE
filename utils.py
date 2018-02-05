@@ -5,6 +5,8 @@ import json
 
 from math import radians, cos, sin, asin, sqrt
 
+config = json.load(open('./config.json', 'r'))
+
 def geo_distance(lon1, lat1, lon2, lat2):
     """
     Calculate the great circle distance between two points
@@ -18,17 +20,15 @@ def geo_distance(lon1, lat1, lon2, lat2):
     r = 6371
     return c * r
 
-def normalize(x, const, key):
-    mean = const[key + '_mean']
-    std = const[key + '_std']
+def normalize(x, key):
+    mean = config[key + '_mean']
+    std = config[key + '_std']
     return (x - mean) / std
 
-def unnormalize(x, const, key):
-    mean = const[key + '_mean']
-    std = const[key + '_std']
+def unnormalize(x, key):
+    mean = config[key + '_mean']
+    std = config[key + '_std']
     return x * std + mean
-
-
 
 def pad_sequence(sequences, lengths):
     padded = torch.zeros(len(sequences), lengths[0]).float()
@@ -62,6 +62,8 @@ def get_local_seq(full_seq, kernel_size, mean, std):
         indices = torch.LongTensor(seq_len)
 
     torch.arange(0, seq_len, out = indices)
+
+    indices = Variable(indices, requires_grad = False)
 
     first_seq = torch.index_select(full_seq, dim = 1, index = indices[kernel_size - 1:])
     second_seq = torch.index_select(full_seq, dim = 1, index = indices[:-kernel_size + 1])

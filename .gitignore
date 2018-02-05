@@ -5,5 +5,5 @@
 *.npy
 
 #foloders
-data/*
 logs/*
+

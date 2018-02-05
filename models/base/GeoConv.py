@@ -17,17 +17,17 @@ class Net(nn.Module):
         self.build()
 
     def build(self):
-        self.road_em = nn.Embedding(190000, 32)
-        self.process_coords = nn.Linear(34, 16)
+        self.state_em = nn.Embedding(2, 2)
+        self.process_coords = nn.Linear(4, 16)
         self.conv = nn.Conv1d(16, self.num_filter, self.kernel_size)
 
     def forward(self, traj, config):
         lngs = torch.unsqueeze(traj['lngs'], dim = 2)
         lats = torch.unsqueeze(traj['lats'], dim = 2)
-        roads = traj['roads'].long()
-        roads = self.road_em(roads)
 
-        locs = torch.cat((lngs, lats, roads), dim = 2)
+        states = self.state_em(traj['states'].long())
+
+        locs = torch.cat((lngs, lats, states), dim = 2)
 
         # map the coords into 16-dim vector
         locs = F.tanh(self.process_coords(locs))
