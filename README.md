@@ -36,7 +36,7 @@ python main.py --task test --weight_file ./saved_weights/weight --batch_size 10 
 ```
 
 ## How to User Your Own Data
-In the data folder we provide some sample data. You can use your own data with the corresponding format as in the data samples.
+In the data folder we provide some sample data. You can use your own data with the corresponding format as in the data samples. The sampled data contains 1800 trajectories. To make the model performance close to our proposed result, make sure your dataset contains more than 5M trajectories.
 
 ### Format Instructions
 Each sample is a json string. The key contains:
